@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<flow name="getAllEmperors" doc:id="c5be359a-e370-4c4c-96cb-be6aaf80a5a7" >
+		<http:listener doc:name="GET /emperors" doc:id="7cfc65b7-0875-4603-b38a-5e67e6009181" config-ref="HTTP_Listener_config" path="/emperors" allowedMethods="GET"/>
+		<db:select doc:name="Select" doc:id="d7a51a5c-b46b-4fef-b67b-388358bc8858" config-ref="Database_Config">
+			<db:sql ><![CDATA[SELECT * FROM emperors]]></db:sql>
+		</db:select>
+		<ee:transform doc:name="Transform Message" doc:id="9bef0654-0721-4758-a278-fc050f494acf" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="getEmperorByID" doc:id="6e2d4956-9105-48f1-b44b-d32c88dd1000" >
+		<http:listener doc:name="GET /emperors/{emperorId}" doc:id="394b191c-9b8f-47e1-a4fe-6dd91cd502d9" config-ref="HTTP_Listener_config" path="/emperors/{emperorId}" allowedMethods="GET"/>
+		<db:select doc:name="Select" doc:id="56cda21f-200c-4df0-86ba-2b7b1bc4aa2a" config-ref="Database_Config" >
+			<db:sql ><![CDATA[SELECT * FROM emperors WHERE id= :emperorId]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{
+	"emperorId": attributes.uriParams.emperorId
+}]]]></db:input-parameters>
+		</db:select>
+		<ee:transform doc:name="Transform Message" doc:id="58162da8-7f62-49bf-8b52-99065209bb1a" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="updateEmperorById" doc:id="94183461-abe4-418d-ae6d-c9bf06934bb9" >
+		<http:listener doc:name="PUT /emperors/{emperorId}" doc:id="3dcf7abb-d8cf-401c-845e-5b0f534487ee" config-ref="HTTP_Listener_config" path="/emperors/{emperorId}" allowedMethods="PUT"/>
+		<db:update doc:name="Update" doc:id="7471a63d-47e6-4f14-b9ad-7390d8747251" config-ref="Database_Config">
+			<db:sql ><![CDATA[UPDATE emperors SET name=:name, reign_start=:reign_start, reign_end=:reign_end, birth_date=:birth_date, death_date=:death_date, dynasty=:dynasty, other_titles=:other_titles, biography=:biography WHERE id=:emperorId]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{
+	"emperorId": attributes.uriParams.emperorId,
+	"name": payload.name,
+	"reign_start": payload.reign_start,
+	"reign_end": payload.reign_end,
+	"birth_date": payload.birth_date,
+	"death_date": payload.death_date,
+	"dynasty": payload.dynasty,
+	"other_titles": payload.other_titles,
+	"biography": payload.biography
+}]]]></db:input-parameters>
+		</db:update>
+		<ee:transform doc:name="Transform Message" doc:id="e9e881f1-e5c8-4ff9-9197-71f4c7ff5c00" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="createEmperor" doc:id="942e724c-3efc-48f8-95c2-ef599868461e" >
+		<http:listener doc:name="POST /emperors" doc:id="2f7652c9-8b26-4808-96b6-898b5e08fba0" config-ref="HTTP_Listener_config" path="/emperors" allowedMethods="POST"/>
+		<db:insert doc:name="Insert" doc:id="78a9ff46-14ed-4722-8b2f-66b76e4be77f" config-ref="Database_Config">
+			<db:sql ><![CDATA[INSERT INTO emperors (name, reign_start, reign_end, birth_date, death_date, dynasty, other_titles, biography) VALUES (:name, :reign_start, :reign_end, :birth_date, :death_date, :dynasty, :other_titles, :biography);]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{
+	"name": payload.name,
+	"reign_start": payload.reign_start,
+	"reign_end": payload.reign_end,
+	"birth_date": payload.birth_date,
+	"death_date": payload.death_date,
+	"dynasty": payload.dynasty,
+	"other_titles": payload.other_titles,
+	"biography": payload.biography
+}]]]></db:input-parameters>
+		</db:insert>
+		<ee:transform doc:name="Transform Message" doc:id="8d5aeef1-33d9-48ed-ae3b-7bce5a9359b1" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="deleteEmperor" doc:id="316dd358-e7c5-43cd-9ce3-9ed98f2d3ca7" >
+		<http:listener doc:name="DELETE /emperors/{emperorId}" doc:id="ebcdce85-a963-4663-94ed-0b900f65dbc8" config-ref="HTTP_Listener_config" path="/emperors/{emperorId}" allowedMethods="DELETE"/>
+		<db:delete doc:name="Delete" doc:id="f2e7a92e-ad15-4517-b814-90b90d5a50be" config-ref="Database_Config">
+			<db:sql ><![CDATA[DELETE FROM emperors where id=:emperorId;]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{
+	"emperorId": attributes.uriParams.emperorId
+}]]]></db:input-parameters>
+		</db:delete>
+		<ee:transform doc:name="Transform Message" doc:id="e8e4f8ec-ca18-40c1-8cc0-5de91beac447" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+</mule>

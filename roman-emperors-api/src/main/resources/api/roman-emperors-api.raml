@@ -1,0 +1,73 @@
+#%RAML 1.0
+title: MULE Roman Emperors API
+mediaType: 
+- application/json
+
+uses:
+  common: /exchange_modules/fc9e3283-a489-4e88-99aa-cceea4aa5ea1/gon-common-api-fragments/1.0.4/gon-common-api-fragments.raml
+
+types:
+  Emperor: !include datatypes/Emperor.raml
+  EmperorNoID: !include datatypes/EmperorNoID.raml
+  Response201: !include datatypes/Response201.raml
+  Response204: !include datatypes/Response204.raml
+
+/emperors:
+  get:
+    is: [common.error-responses]
+    description: Retrieve a list of all Roman Emperors
+    displayName: List of Emperors
+    responses:
+      200:
+        body:
+          type: Emperor[]
+
+  post:
+    is: [common.error-responses]
+    description: Create a New Roman Emperor
+    displayName: Add Emperor
+    body:
+      type: EmperorNoID
+    responses:
+      201:
+        description: Emperor created successfully
+        body:
+          type: Response201
+
+/emperors/{emperorId}:
+  get:
+    is: [common.error-responses]
+    description: Retrieve details about a specific Roman Emperor.
+    displayName: Details of an Emperor
+    responses:
+      200:
+        description: Successful response with the details of the emperor.
+        body:
+          type: EmperorNoID
+
+  put:
+    is: [common.error-responses]
+    description: Update details of a specific Roman emperor.
+    displayName: Update Emperor
+    body:
+      type: EmperorNoID
+    responses:
+      201:
+        description: Successful update of the emperor details.
+        body:
+          type: Response201
+
+
+  delete:
+    is: [common.error-responses]
+    description: Delete a specific Roman Emperor.
+    displayName: Delete Emperor
+    responses:
+      204:
+        description: Successful deletion of the emperor
+        body:
+          type: Response204
+  
+
+
+
