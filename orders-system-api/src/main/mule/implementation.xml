@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="346b0a15-eeeb-4c19-a90c-52362ce3924a" >
+		<http:listener-connection host="0.0.0.0" port="8085" />
+	</http:listener-config>
+	<db:config name="Database_Config" doc:name="Database Config" doc:id="f8b0d55a-e982-4a81-b6d7-b49050db6f98" >
+		<db:my-sql-connection host="localhost" port="3306" user="root" password="Mule1234" database="mule-db" />
+	</db:config>
+	<flow name="getAllOrders" doc:id="e546b3f4-70f5-4b1e-8a1a-d51ceebd2e15" >
+		<http:listener doc:name="GET /orders on 8085" doc:id="c2f4fbf8-9fd0-468b-a9df-3f0a8bf5032c" config-ref="HTTP_Listener_config" path="/orders" allowedMethods="GET"/>
+		<db:select doc:name="SELECT * FROM Orders" doc:id="5f63c63a-2658-4a8e-ae66-216800205a66" config-ref="Database_Config">
+			<db:sql ><![CDATA[SELECT * FROM Orders;]]></db:sql>
+		</db:select>
+		<ee:transform doc:name="Prepare Response - Convert to JSON" doc:id="bf2b6fe1-5077-42cc-a19e-bc0b839230f3" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="createOrder" doc:id="54452b85-f063-4522-994f-307b756b9743" >
+		<http:listener doc:name="POST /orders on 8085" doc:id="09700e9b-f2cd-4610-8db8-0a24028ae02e" config-ref="HTTP_Listener_config" path="/orders" allowedMethods="POST"/>
+		<db:insert doc:name="Insert INTO Orders" doc:id="99c3991f-f6f6-4576-8828-8a662a21a9d2" config-ref="Database_Config">
+			<db:sql ><![CDATA[INSERT INTO Orders (CustomerID, OrderDate, ShippingAddress, BillingAddress, TotalAmount, OrderStatus, PaymentMethod, ShippingMethod)
+VALUES (:customer_id, :order_date, :shipping_address, :billing_address, :total_amount, :order_status, :payment_method, :shipping_method)]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{
+	"customer_id": payload.customer_id,
+	"order_date": payload.order_date,
+	"shipping_address": payload.shipping_address,
+	"billing_address": payload.billing_address,
+	"total_amount": payload.total_amount,
+	"order_status": payload.order_status,
+	"payment_method": payload.payment_method,
+	"shipping_method": payload.shipping_method
+}]]]></db:input-parameters>
+		</db:insert>
+	</flow>
+	<flow name="getOrderById" doc:id="1a23167c-7f6b-4e66-b430-641150357c3d" >
+		<http:listener doc:name="GET /orders/{orderId} on 8085" doc:id="a4cbb3b9-b662-4000-95ec-f54538bb2cdc" config-ref="HTTP_Listener_config" path="/orders/{orderId}" allowedMethods="GET"/>
+		<db:select doc:name="Select" doc:id="446523c5-2b7c-46c9-9353-7c0ff15a5ed4" config-ref="Database_Config">
+			<db:sql ><![CDATA[SELECT * FROM Orders WHERE OrderID = :orderId;]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{
+	"orderId": attributes.uriParams.orderId
+}]]]></db:input-parameters>
+		</db:select>
+		<ee:transform doc:name="Prepare Response - Convert to JSON" doc:id="79c78acc-7b97-4890-a9bd-f4e83bd8a1fc" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="updateOrderById" doc:id="67572597-37ae-4285-9e9a-c4acbb4a90d7" >
+		<http:listener doc:name="PUT /orders/{orderId} on 8085" doc:id="654f2559-2f2c-4d3e-b76b-d57dc41aa151" config-ref="HTTP_Listener_config" path="/orders/{orderId}" allowedMethods="PUT"/>
+		<db:update doc:name="Update" doc:id="e0d6e497-9912-464c-aff2-b9ce41541f1f" config-ref="Database_Config">
+			<db:sql ><![CDATA[UPDATE Orders
+SET CustomerID = :customer_id, OrderDate = :order_date, ShippingAddress = :shipping_address,
+    BillingAddress = :billing_address, TotalAmount = :total_amount, OrderStatus = :order_status,
+    PaymentMethod = :payment_method, ShippingMethod = :shipping_method
+WHERE OrderID = :order_id;]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{
+	"order_id": attributes.uriParams.orderId,
+	"customer_id": payload.customer_id,
+	"order_date": payload.order_date,
+	"shipping_address": payload.shipping_address,
+	"billing_address": payload.billing_address,
+	"total_amount": payload.total_amount,
+	"order_status": payload.order_status,
+	"payment_method": payload.payment_method,
+	"shipping_method": payload.shipping_method
+}]]]></db:input-parameters>
+		</db:update>
+	</flow>
+	<flow name="deleteOrderById" doc:id="e715ff91-e770-4ed8-84dc-a2ff4b3908ee" >
+		<http:listener doc:name="DELETE /orders/{orderId} on 8085" doc:id="ffd2710b-7b9e-411a-9901-41ee21e5f266" config-ref="HTTP_Listener_config" path="/orders/{orderId}" allowedMethods="DELETE"/>
+		<db:delete doc:name="Delete" doc:id="f88244ed-589a-45d6-860b-28826d1e4da8" config-ref="Database_Config">
+			<db:sql ><![CDATA[DELETE FROM Orders WHERE OrderID = :order_id;]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{
+    "order_id": attributes.uriParams.orderId
+}]]]></db:input-parameters>
+		</db:delete>
+	</flow>
+</mule>
